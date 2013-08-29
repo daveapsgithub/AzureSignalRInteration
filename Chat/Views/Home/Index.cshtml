@@ -1,0 +1,89 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@section featured {
+   
+}
+
+<h1>Azure SignalR Interation example</h1>
+
+<p>This applications demonstrates the relationship between SignalR and Azure instances.</p>
+
+<p>This application will open a SignalR connection to an Azure instance. Azure will record in an Azure table storage
+the end point on which this connection was established. </p>
+
+<p>Four things then happen</p>
+1. The browser will periodically send a message to Azure which the Azure instance will reply to<br />
+2. The Azure instance that received the connection request will periodically send a message to the client<br />
+3. The user can elect to send a message from the browser to the Azure instance which will then reply.<br />
+4. The user can elect to send a message from the browser to the Azure instance which will then use WebApi to 
+send the message onto the instance that the SignalR connection was established on, and then have the message sent back 
+to the client.<br />
+
+<p>What do you think will happen?</p>
+
+<p>SignalR may work differently to what you think.  At the time of writing, the combination of IE10 and Azure is not 
+using a socket connection; it is using a 'Forever Frame'.  Use Fiddler to verify.  This means that a HTTP connection 
+is opened for each communication from the client to the server.   This has big ramifations for multi-instance Azure 
+since the load balancer will shunt subsequent requests to a different instance.</p>
+
+<p>To send a message from the server to the client, only the instance on which the SignalR OnConnected method was called 
+can be used. Attempting to send a message to the client for any other instance will silently fail.</p>
+
+<p>This app will demonstrate this as only "2" and "4" above result in messages being sent to the client.</p>
+
+<p>Be sure to open the Compute Emulator for various log messages.</p>
+
+<form id='myForm'>
+
+	<input type='button' id='cmdSendMessage' value='Send message and get reply (does not work)' />
+
+	<input type='button' id='cmdSendWebApiMessage' value='Send message, WebApi it to other instance and get reply (works)' />
+
+
+	<div id='history'>
+	</div>
+
+</form>
+
+
+    <!--Script references. -->
+    <!--Reference the SignalR library. -->
+    <!--Add script to update the page and send messages.--> 
+    <script type="text/javascript">
+    	$(function () {
+
+    		// Declare a proxy to reference the hub. 
+    		var chat = $.connection.chatHub;
+
+    		chat.client.sendMessageToClient = function (message) {
+    			$('#history').append("<br/>" + message);
+    		};
+
+
+    		// Start the connection.
+    		$.connection.hub.start().done(function () {
+
+    			$('#cmdSendMessage').click(function () {
+
+    				// Call the Send method on the hub. 
+    				chat.server.sendMessageToServer();
+
+    			});
+
+    			$('#cmdSendWebApiMessage').click(function () {
+
+    				// Call the Send method on the hub. 
+    				chat.server.sendMessageToServerWithWebApi();
+
+    			});
+
+    			var callback = function (repeat) { chat.server.sendPeriodicMessageToServer(); window.setTimeout(function () { repeat(repeat); }, 2000); };
+
+    			callback(callback); 
+
+    		});
+
+
+    	});
+    </script>
