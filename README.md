@@ -14,3 +14,5 @@ Four things then happen
 What do you think will happen?
 
 SignalR may work differently to what you think....  Download to find out.
+
+Go to http://stackoverflow.com/questions/18187427/azure-signalr-and-web-api-not-sending-message-to-client for more info
